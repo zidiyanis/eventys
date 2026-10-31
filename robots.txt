@@ -1,0 +1,29 @@
+# Eventys - tout le monde peut lire le site.
+
+User-agent: *
+Allow: /
+
+# Robots d'IA : explicitement autorises, pour que le site puisse etre cite
+# dans les reponses (ChatGPT, Claude, Perplexity, Gemini, Copilot).
+User-agent: GPTBot
+Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+User-agent: Bingbot
+Allow: /
+
+Sitemap: https://zidiyanis.github.io/eventys/sitemap.xml
