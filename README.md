@@ -143,3 +143,34 @@ rejouable : si l'adresse change, on la relance.
    moi ». C'est le levier le plus fort pour du local, devant le site.
 3. Mettre l'adresse du site dans la bio Instagram et TikTok (les liens depuis
    ces profils comptent).
+
+## Mise en ligne sur Vercel
+
+Le site est statique : pas de compilation, Vercel sert les fichiers tels quels.
+
+1. vercel.com → **Add New… → Project** → *Import Git Repository* → `zidiyanis/eventys`.
+2. Framework Preset : **Other**. Build Command : vide. Output Directory : vide
+   (la racine). Install Command : vide. → **Deploy**.
+3. Ensuite, chaque `git push` sur `main` redéploie tout seul. Une branche ou une
+   pull request donne une adresse d'essai, sans toucher au site en ligne.
+
+`vercel.json` pose les en-têtes : protections de base (nosniff, anti-iframe,
+HSTS) et la durée de cache des médias — un jour dans le navigateur, une semaine
+en arrière-plan, pour qu'une photo regénérée par `medias.py` sous le même nom
+finisse par remplacer l'ancienne au lieu de rester coincée un an.
+
+`404.html` est servi automatiquement par Vercel sur une adresse inconnue.
+
+### Brancher le nom de domaine
+
+1. Vercel → le projet → **Settings → Domains** → ajouter le domaine.
+2. Chez le vendeur du domaine, poser les enregistrements que Vercel affiche
+   (en général un `A` vers `76.76.21.21` pour le domaine nu et un `CNAME` vers
+   `cname.vercel-dns.com` pour `www`). Le certificat HTTPS se fait tout seul.
+3. **Relancer le référencement avec la vraie adresse** :
+   ```
+   python outils/referencement.py https://le-domaine.fr/
+   git add -A && git commit -m "Referencement : nouveau domaine" && git push
+   ```
+4. Couper GitHub Pages (Settings → Pages → Source : None) pour ne pas avoir
+   deux fois le même site en ligne.
