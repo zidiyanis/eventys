@@ -65,9 +65,14 @@ def fais_index(url):
             print("  -", e)
         sys.exit(1)
 
-    # on enleve d'abord les anciennes lignes, pour pouvoir rejouer le script
+    # On remet d'abord tout a l'etat de depart, sinon le script ne peut pas
+    # etre rejoue : une adresse deja absolue ne serait pas remplacee et le
+    # site garderait l'ancien domaine dans les images de partage.
     html = re.sub(r'\n<link rel="canonical"[^>]*>', "", html)
     html = re.sub(r'\n<meta property="og:url"[^>]*>', "", html)
+    html = re.sub(r'(content=")https?://[^"]*?/(assets/img/)', r"\1\2", html)
+    html = re.sub(r'("(?:image|logo)": ")https?://[^"]*?/(assets/img/)', r"\1\2", html)
+    html = re.sub(r'"@id": "https?://[^"#]*#eventys"', '"@id": "#eventys"', html)
 
     html = html.replace(
         '<title>',
