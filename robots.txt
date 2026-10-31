@@ -26,4 +26,4 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-Sitemap: https://zidiyanis.github.io/eventys/sitemap.xml
+Sitemap: https://eventysparis.fr/sitemap.xml
