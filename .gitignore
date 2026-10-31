@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# Windows / macOS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# brouillons locaux
+*.bak
+
+# rapports de l outil d audit (regenerables)
+.taste-skill/
