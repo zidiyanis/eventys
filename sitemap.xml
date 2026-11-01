@@ -6,4 +6,6 @@
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
-</urlset>
+  <url><loc>https://eventysparis.fr/confidentialite</loc></url>
+  <url><loc>https://eventysparis.fr/conditions</loc></url>
+  </urlset>

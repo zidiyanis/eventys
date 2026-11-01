@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion TikTok | Eventys</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/img/logo.png">
+<link rel="stylesheet" href="/assets/css/style.css">
+<style>
+  main { padding: var(--bloc) var(--marge); max-width: 60ch; display: grid; gap: 18px; }
+  code { word-break: break-all; display: block; padding: 14px; background: #fff; border: 1px solid #ddd; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Connexion TikTok</h1>
+  <p id="msg">Aucun code reçu.</p>
+  <code id="code" hidden></code>
+  <p>Copie ce code dans le terminal d'Eventys. Il ne sert qu'une fois.</p>
+</main>
+<script>
+  const p = new URLSearchParams(location.search);
+  const c = p.get('code');
+  if (c) {
+    document.getElementById('msg').textContent = 'Code de connexion :';
+    const el = document.getElementById('code'); el.textContent = c; el.hidden = false;
+  } else if (p.get('error')) {
+    document.getElementById('msg').textContent = 'Refusé : ' + p.get('error');
+  }
+</script>
+</body>
+</html>
