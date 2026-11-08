@@ -30,7 +30,7 @@ FPS = 30
 FF = B.FF
 OUT = os.path.dirname(os.path.abspath(__file__))
 TMP = os.path.join(OUT, "_tmp_styles")
-STICKERS = os.path.join(OUT, "_cartes", "stickers")
+STICKERS = os.path.join(OUT, "_cartes", "stickers_nouveaux")
 
 CREME = da.CREME
 BORDEAUX = da.BORDEAUX
