@@ -1,0 +1,40 @@
+# SECRETS : ne jamais pousser
+cles.env
+*.env
+meta/tiktok_jetons.json
+meta/identifiants.json
+meta/discord_messages.json
+meta/publie.json*
+
+# Lourd / regenerable
+Video/
+tools/
+rushes/
+journal/
+_a_publier_aujourdhui/
+leboncoin/
+voix/
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.heic
+*.pdf
+montages/_attente_*/
+montages/_cartes/
+montages/_stories/
+montages/_carrousel*/
+montages/_essai_sfx/
+montages/couvertures/
+montages/pret_a_publier/
+
+# Le site a son propre depot
+site-internet/
+
+# Python / systeme
+__pycache__/
+*.pyc
+*.log
+Thumbs.db
+.taste-skill/
+.claude/settings.local.json
