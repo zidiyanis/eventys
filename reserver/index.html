@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>Eventys · Compose ta location</title>
-<meta name="description" content="Choisis ta date et ton mobilier, Yanis te répond avec un devis.">
+<meta name="description" content="Choisis ta date et ton mobilier, Eventys te répond avec un devis.">
 <meta name="theme-color" content="#F6F2F0">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" href="/gestion/icone-192.png">
@@ -109,9 +109,9 @@ function card(it){
 }
 function render(){
   if(S.sent){
-    var msg='Bonjour Yanis, je viens d’envoyer une demande sur ton site pour le '+fdate(S.sent.date)+' ('+S.sent.txt+').';
-    $('#app').innerHTML='<div class="done"><img src="/gestion/icone-192.png" alt="" width="72" height="72" style="border-radius:18px"><h1>Demande envoyée</h1><p class="mut">Merci '+esc(S.sent.nom)+' ! Yanis la reçoit tout de suite et te répond avec un devis, en général dans la journée. Rien n’est réservé avant sa confirmation.</p>'
-     +'<div class="recap">'+esc(S.sent.recap)+'</div><a class="btn" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">Prévenir Yanis sur WhatsApp</a>'
+    var msg='Bonjour, je viens d’envoyer une demande sur ton site pour le '+fdate(S.sent.date)+' ('+S.sent.txt+').';
+    $('#app').innerHTML='<div class="done"><img src="/gestion/icone-192.png" alt="" width="72" height="72" style="border-radius:18px"><h1>Demande envoyée</h1><p class="mut">Merci '+esc(S.sent.nom)+' ! Eventys la reçoit tout de suite et te répond avec un devis, en général dans la journée. Rien n’est réservé avant sa confirmation.</p>'
+     +'<div class="recap">'+esc(S.sent.recap)+'</div><a class="btn" href="https://wa.me/'+WA+'?text='+encodeURIComponent(msg)+'" target="_blank" rel="noopener">Prévenir Eventys sur WhatsApp</a>'
      +'<p class="sm mut" style="margin-top:12px">Facultatif : ta demande est déjà arrivée.</p></div>';
     $('#bar').hidden=true;return;
   }
@@ -134,7 +134,7 @@ function render(){
   var est=loc()+(L&&S.tarifs.livPub?S.tarifs.livMin:0);
   $('#bar').hidden=false;
   $('#bar').innerHTML='<div class="in"><div class="tot"><span>'+(L&&!S.tarifs.livPub?'Location (hors livraison)':'Estimation')+'</span><span>'+(L&&S.tarifs.livPub?'dès ':'')+eur(est)+'</span></div>'
-   +'<div class="sm mut">'+(L?(S.tarifs.livPub?'Livraison à partir de '+eur(S.tarifs.livMin)+'. ':'Livraison : prix confirmé par Yanis selon ton adresse. '):'Retrait au box : gratuit. ')+'Rien n’est réservé avant sa confirmation.</div>'
+   +'<div class="sm mut">'+(L?(S.tarifs.livPub?'Livraison à partir de '+eur(S.tarifs.livMin)+'. ':'Livraison : prix confirmé par Eventys selon ton adresse. '):'Retrait au box : gratuit. ')+'Rien n’est réservé avant sa confirmation.</div>'
    +'<button class="btn" data-a="send" '+(S.busy?'disabled':'')+'>'+(S.busy?'Envoi…':'Envoyer ma demande')+'</button></div>';
 }
 function loadDispo(){
@@ -170,7 +170,7 @@ function send(){
      S.sent={nom:S.nom.trim().split(' ')[0],date:S.date,txt:lines.join(', '),
        recap:cap(fdate(S.date))+'\n'+lines.join('\n')+'\n'+(S.mode==='livraison'?'Livraison à '+S.ville.trim():'Retrait au box')+'\nLocation : '+eur(loc())+(S.mode==='livraison'?' (hors livraison)':'')};
      S.busy=false;render();window.scrollTo(0,0)})
-   .catch(function(err){S.busy=false;S.err=/trop de demandes/.test(err.message)?'Beaucoup de demandes en ce moment : réessaie dans un moment, ou écris à Yanis sur WhatsApp.':'L’envoi n’a pas marché. Vérifie ta connexion, ou écris directement à Yanis sur WhatsApp au 07 83 82 56 38.';render()});
+   .catch(function(err){S.busy=false;S.err=/trop de demandes/.test(err.message)?'Beaucoup de demandes en ce moment : réessaie dans un moment, ou écris à Eventys sur WhatsApp.':'L’envoi n’a pas marché. Vérifie ta connexion, ou écris directement à Eventys sur WhatsApp au 07 83 82 56 38.';render()});
 }
 var cap=function(s){return s.charAt(0).toUpperCase()+s.slice(1)};
 render();
