@@ -14,7 +14,7 @@
       ]
     },
     {
-      "source": "/(gestion|reserver|api)(.*)",
+      "source": "/(gestion|reserver|devis|api)(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
         { "key": "Referrer-Policy", "value": "no-referrer" }

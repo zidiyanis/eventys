@@ -8,6 +8,7 @@ const SB_URL='https://qtktxkolgxytroblylae.supabase.co',SB_KEY='sb_publishable_W
 /* Mode essai, uniquement sur l'ordinateur de développement : données fictives en mémoire. */
 const MOCK=/^(localhost|127\.0\.0\.1)$/.test(location.hostname)&&/[?&]mock=1/.test(location.search);
 const CAT=window.EV_CAT,ITEMS=CAT.items;
+const stOf=r=>(r.statut==='devis'||r.statut==='demande')&&r.devisAccepte?['Devis accepté','good']:STAT[r.statut];
 const STAT={demande:['À traiter','warn'],devis:['Devis envoyé','acc'],confirmee:['Confirmée','good'],livree:['Livrée','acc'],terminee:['Terminée','mut'],annulee:['Annulée','bad']};
 const pad=n=>String(n).padStart(2,'0');
 const localIso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -101,7 +102,7 @@ function events(iso){
 }
 const depLine=(r,h)=>isL(r)&&!['terminee','annulee'].includes(r.statut)?`<div class="dep">${ic('truck',14)}Départ ${hm(departOf(r,h))} · ${r.trajet} min</div>`:'';
 function evCard(e){
-  const r=e.r,[sl,sc]=STAT[r.statut],d=due(r),showRest=firm(r)&&d>0&&r.statut!=='terminee';
+  const r=e.r,[sl,sc]=stOf(r),d=due(r),showRest=firm(r)&&d>0&&r.statut!=='terminee';
   return `<button class="ev" data-act="open" data-id="${r.id}"><div class="tm">${e.h}<small>${e.t}</small></div>
    <div class="mn"><div class="nm">${esc(r.client)}</div><div class="sm mut">${r.ville?esc(r.ville)+' · ':''}${qtyText(r.items)}</div>${depLine(r,e.h)}</div>
    <div class="rt"><span class="st c-${sc}">${sl}</span><b>${eur(total(r))}</b>${showRest?`<span class="sm c-warn">Reste ${eur(d)}</span>`:''}</div></button>`;
@@ -112,6 +113,7 @@ function todos(){
   const out=[],tom=addDays(TODAY,1),wk=addDays(TODAY,-7);
   S.res.forEach(r=>{const sv=r.suivi||{};
     if(r.statut==='demande')out.push({r,i:'msg',t:`Répondre à ${r.client}`,s:isL(r)&&r.liv===0?'Demande reçue · fixe le prix de livraison':'Demande reçue · envoie le devis',m:'devis'});
+    else if(r.statut==='devis'&&paid(r)===0&&r.devisAccepte)out.push({r,i:'euro',t:`${r.client} a accepté le devis`,s:`Attends l’acompte de ${eur(acompte(r))}, puis confirme`});
     else if(r.statut==='devis'&&paid(r)===0){const j=sv.devis?Math.round((D(TODAY)-D(sv.devis))/864e5):null;
       if(j===null||j>=2)out.push({r,i:'msg',t:`Relancer ${r.client}`,s:`Devis ${j===null?'envoyé':'envoyé il y a '+j+' j'} · acompte de ${eur(acompte(r))} pas reçu`,m:'relance'})}
     if(r.statut==='confirmee'&&r.date===tom&&!sv.rappel)out.push({r,i:'msg',t:`Rappel de la veille à ${r.client}`,s:`${isL(r)?'Livraison':'Retrait'} demain à ${r.heure}`,m:'rappel'});
@@ -164,7 +166,7 @@ function vAgenda(){
 function vListe(){
   const F=[['tout','Tout'],['traiter','À traiter'],['venir','À venir'],['encaisser','À encaisser'],['finies','Terminées']];
   const list=S.res.filter(r=>S.filter==='tout'?true:S.filter==='traiter'?(r.statut==='demande'||r.statut==='devis'):S.filter==='venir'?(r.statut==='confirmee'||r.statut==='livree'):S.filter==='encaisser'?(firm(r)&&due(r)>0&&r.statut!=='terminee'||firm(r)&&due(r)>0):r.statut==='terminee'||r.statut==='annulee').sort((a,b)=>a.date<b.date?-1:1);
-  const card=r=>{const [sl,sc]=STAT[r.statut],d=due(r),s=sigOf(r);
+  const card=r=>{const [sl,sc]=stOf(r),d=due(r),s=sigOf(r);
    return `<button class="ev" style="grid-template-columns:1fr auto" data-act="open" data-id="${r.id}"><div><div class="nm">${esc(r.client)}</div><div class="sm mut">${cap(fd(r.date,{weekday:'short',day:'numeric',month:'short'}))} · ${r.heure} · ${isL(r)?esc(r.ville):'Retrait au box'}</div>${isL(r)&&r.liv===0&&r.statut==='demande'?'<div class="st c-bad" style="margin-top:6px">Prix de livraison à fixer</div>':depLine(r,r.heure)}</div>
    <div class="rt"><span class="st c-${sc}">${sl}</span><b>${eur(total(r))}</b>${firm(r)?(d>0?`<span class="sm c-warn">Reste ${eur(d)}</span>`:d<0?`<span class="sm c-warn">Trop-perçu ${eur(-d)}</span>`:'<span class="sm c-good">Soldée</span>'):`<span class="sm c-${s[0]}">Marge ${eur(net(r))}</span>`}</div></button>`};
   return `<div class="hd"><div class="grow"><h1>Réservations</h1></div><button class="rb pri" data-act="new" aria-label="Nouvelle demande">${ic('plus',24)}</button></div>
@@ -250,7 +252,7 @@ function vClients(){
 
 /* ---------- messages WhatsApp ---------- */
 const TPL={
- devis:['Devis',"Bonjour {prenom}, voici ton devis Eventys pour le {date} :\n{articles}\n{livraison}{remise}\n\nTotal : {total}\nPour réserver, acompte de {pct} % : {acompte}.{paiement}\nDis-moi si ça te convient !"],
+ devis:['Devis',"Bonjour {prenom}, voici ton devis Eventys pour le {date} :\n{lien}\n\nTotal : {total}. Pour bloquer la date, acompte de {pct} % : {acompte}.\nTu peux l'accepter directement sur la page. À très vite !"],
  relance:['Relance',"Bonjour {prenom}, je reviens vers toi pour ton devis du {date} ({total}). Je te garde le matériel dès que tu me confirmes avec l'acompte de {acompte}.{paiement}"],
  confirm:['Acompte reçu',"Merci {prenom}, j'ai bien reçu ton acompte. Ta réservation est confirmée pour le {date} à {heure}. Il restera {reste} à régler le jour J."],
  rappel:['Rappel J-1',"Bonjour {prenom}, petit rappel : {rdv} demain, {date}, à {heure}. Peux-tu me confirmer l'adresse et un contact sur place ?"],
@@ -258,13 +260,35 @@ const TPL={
  client:['Ancien client',"Bonjour {prenom}, c'est Yanis d'Eventys. Tu as un événement de prévu prochainement ? Je peux te refaire un devis rapidement."]
 };
 const tplOf=t=>(S.set.msgs&&S.set.msgs[t])||TPL[t][1];
+/* ---------- devis en ligne ---------- */
+const newTok=()=>{const a=new Uint8Array(24);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,'0')).join('')};
+const tokOf=r=>r.devisToken||(r._tok=r._tok||newTok());
+const devisUrl=r=>location.origin+'/devis?d='+tokOf(r);
+function nextNum(){const y=TODAY.slice(0,4);let m=0;S.res.forEach(r=>{const n=r.devis&&r.devis.num||'';const k=n.match(/^DEV-(\d{4})-(\d+)$/);if(k&&k[1]===y)m=Math.max(m,+k[2])});return 'DEV-'+y+'-'+String(m+1).padStart(3,'0')}
+function snapshot(r){
+  const L=isL(r),keys=Object.keys(r.items).filter(k=>r.items[k]>0);
+  return {num:r.devis&&r.devis.num||nextNum(),emis:TODAY,valide:addDays(TODAY,7),client:r.client.trim(),
+   date:r.date,heure:r.heure,retour:r.retour,heureRetour:r.heureRetour,mode:r.mode,ville:L?r.ville:'',
+   lignes:keys.map(k=>({n:itemOf(k).n,q:r.items[k],pu:price(k),m:r.items[k]*price(k)})),
+   location:loc(r.items),livraison:L?r.liv:0,remise:r.remise||0,total:total(r),pct:S.set.acompte,acompte:acompte(r),
+   paye:paid(r),paiement:(S.set.paiement||'').trim()};
+}
+function sendDevis(r){
+  const d=snapshot(r);r.devis=d;r.devisToken=tokOf(r);
+  const patch={devis:d,devisToken:r.devisToken};
+  if(r.statut==='demande'){r.statut='devis';patch.statut='devis'}
+  r.suivi=Object.assign({},r.suivi,{devis:TODAY});patch.suivi=r.suivi;
+  saveRes(r,patch,true);toast('Devis '+d.num+' envoyé');setTimeout(render,80);
+}
 function msgText(r,type){
   const L=isL(r),v={prenom:r.client.trim().split(' ')[0],date:fd(r.date),heure:r.heure,ville:r.ville||'',
    articles:Object.keys(r.items).filter(k=>r.items[k]>0).map(k=>`• ${r.items[k]} × ${itemOf(k).n} (${eur(price(k))})`).join('\n'),
    livraison:L?(r.liv>0?`• Livraison${r.ville?' '+r.ville:''} : ${eur(r.liv)}`:'• Livraison : prix à confirmer'):'• Retrait au box à Soisy-sous-Montmorency',
    remise:r.remise?`\n• Remise : −${eur(r.remise)}`:'',total:eur(total(r)),pct:S.set.acompte,acompte:eur(acompte(r)),
-   reste:eur(Math.max(0,due(r))),paye:eur(paid(r)),paiement:S.set.paiement&&S.set.paiement.trim()?'\n'+S.set.paiement.trim():'',rdv:L?'je te livre':'tu passes au box'};
-  return tplOf(type).replace(/\{(\w+)\}/g,(m,k)=>k in v?v[k]:m);
+   reste:eur(Math.max(0,due(r))),paye:eur(paid(r)),lien:devisUrl(r),paiement:S.set.paiement&&S.set.paiement.trim()?'\n'+S.set.paiement.trim():'',rdv:L?'je te livre':'tu passes au box'};
+  let t=tplOf(type).replace(/\{(\w+)\}/g,(m,k)=>k in v?v[k]:m);
+  if(type==='devis'&&t.indexOf(v.lien)<0)t+='\n'+v.lien;
+  return t;
 }
 
 /* ---------- réglages ---------- */
@@ -300,7 +324,7 @@ function vReglages(){
   <div class="chips">${Object.keys(TPL).map(k=>`<button class="fchip" aria-pressed="${tp===k}" data-act="tpl" data-v="${k}">${TPL[k][0]}</button>`).join('')}</div>
   <div class="field" style="margin-top:10px"><label for="set-msg">Texte du message « ${TPL[tp][0]} »</label><textarea class="inp tall" id="set-msg" data-msg="${tp}">${esc(tplOf(tp))}</textarea></div>
   <div class="row sp" style="margin-top:6px"><span class="sm mut">${custom?'Texte modifié par toi':'Texte d’origine'}</span>${custom?'<button class="lnk" data-act="tplreset">Remettre l’origine</button>':''}</div>
-  <div class="sm mut" style="margin-top:8px">Mots remplacés tout seuls : {prenom} {date} {heure} {articles} {livraison} {remise} {total} {acompte} {pct} {reste} {paye} {paiement} {rdv} {ville}</div>
+  <div class="sm mut" style="margin-top:8px">Mots remplacés tout seuls : {prenom} {date} {heure} {lien} {articles} {livraison} {remise} {total} {acompte} {pct} {reste} {paye} {paiement} {rdv} {ville}</div>
   <div class="gt">Catalogue</div>
   <div class="box">${ITEMS.map(i=>`<div class="pr"><span>${i.n}${i.stock?` <span class="sm mut">· ${i.stock} en stock</span>`:''}</span><b>${eur(price(i.k))}</b></div>`).join('')}</div>
   <div class="gt">Mes données</div>
@@ -337,8 +361,20 @@ function payBlock(r){
    <div class="seg">${['Espèces','Virement','Autre'].map(m=>`<button data-act="paym" data-v="${m}" aria-pressed="${S.pin.m===m}">${m}</button>`).join('')}</div>
    ${list?`<div>${list}</div>`:'<div class="sm mut">Aucun paiement noté.</div>'}</div>`;
 }
+function devisBlock(r){
+  if(r.statut==='annulee')return '';
+  const d=r.devis,L=isL(r),open=['demande','devis'].includes(r.statut),num=waNum(r.tel||'');
+  const changed=d&&(d.total!==total(r)||d.livraison!==(L?r.liv:0)||d.location!==loc(r.items));
+  const st=d?`<div class="row sp"><div><div class="b">Devis ${esc(d.num)}</div><div class="sm mut">${r.devisAccepte?'Accepté le '+fd(localIso(new Date(r.devisAccepte)),{day:'numeric',month:'long'}):'Envoyé le '+fd(d.emis,{day:'numeric',month:'long'})+' · pas encore accepté'}</div></div><a class="lnk" target="_blank" rel="noopener" href="${devisUrl(r)}">Voir</a></div>`:'';
+  if(!open)return d?`<div class="box">${st}</div>`:'';
+  const warn=L&&r.liv===0?'<div class="tip bad">Fixe d’abord le prix de la livraison ci-dessous.</div>':!Object.keys(r.items).length?'<div class="tip bad">Ajoute les articles avec « Modifier ».</div>':'';
+  const lbl=!d?'Envoyer le devis':changed?'Renvoyer le devis mis à jour':'Renvoyer le devis';
+  return `<div class="box stack">${st}${changed?'<div class="tip">Le prix a changé depuis l’envoi : renvoie le devis.</div>':''}${warn}
+   <a class="btn${d&&!changed?' ghost':''}" target="_blank" rel="noopener" data-act="sendevis" href="https://wa.me/${num}?text=${encodeURIComponent(msgText(r,'devis'))}">${ic('msg',18)}${lbl} · ${eur(total(r))}</a>
+   <div class="sm mut">Crée une page de devis à ton nom (n°, détail, acompte, bouton « J’accepte ») et ouvre WhatsApp avec le lien, prêt à envoyer.</div></div>`;
+}
 function sheetDetail(r){
-  const [sl,sc]=STAT[r.statut],L=isL(r),go=L&&!['terminee','annulee'].includes(r.statut),s=sigOf(r),lo=loc(r.items);
+  const [sl,sc]=stOf(r),L=isL(r),go=L&&!['terminee','annulee'].includes(r.statut),s=sigOf(r),lo=loc(r.items);
   const keys=Object.keys(r.items).filter(k=>r.items[k]>0);
   const items=keys.map(k=>`<div class="pr"><span>${r.items[k]} × ${itemOf(k).n}</span><b>${eur(r.items[k]*price(k))}</b></div>`).join('');
   const ck=S.chk[r.id]||{};
@@ -373,6 +409,7 @@ function sheetDetail(r){
    ${S.disc?`<div class="row sp" style="margin-top:8px"><span class="sm mut">Remise</span>${stp('data-act="rem" data-d="-5"','data-act="rem" data-d="5"',eur(r.remise||0))}</div>`:''}
   </div>
   ${L?`<div class="box stack"><div class="row sp"><div><div class="b">Livraison facturée</div></div>${stp('data-act="adj" data-f="liv" data-d="-5"','data-act="adj" data-f="liv" data-d="5"',eur(r.liv))}</div><div class="row sp"><div><div class="b">Coût du camion</div><div class="sm mut">Aller-retour, pour toi</div></div>${stp('data-act="adj" data-f="camion" data-d="-5"','data-act="adj" data-f="camion" data-d="5"',eur(r.camion))}</div></div>`:''}
+  ${devisBlock(r)}
   <div class="mg ${s[0]}"><div class="v">${eur(net(r))}</div><div><div class="b">Ta marge · ${s[1]}</div><div class="sm">${total(r)?Math.round(net(r)/total(r)*100):0} % du total${L?' · camion '+eur(r.camion):''}</div></div></div>
   ${L&&r.liv<r.camion&&r.liv>0?`<div class="tip bad">Livraison sous le coût du camion : tu perds ${eur(r.camion-r.liv)} sur le trajet.</div>`:''}
   ${L&&lo>0&&lo<S.set.min?`<div class="tip">Location de ${eur(lo)} : sous ton minimum de livraison (${eur(S.set.min)}). Propose le retrait au box.</div>`:''}
@@ -431,10 +468,10 @@ function sheetNew(){
 
 /* ---------- données (Supabase) ---------- */
 let sb=null;
-const KEYMAP={heureRetour:'heure_retour'};
+const KEYMAP={heureRetour:'heure_retour',devisToken:'devis_token',devisAccepte:'devis_accepte'};
 const toDb=p=>{const o={};for(const k in p)o[KEYMAP[k]||k]=p[k];return o};
 const hhmm=(v,d)=>/^\d\d:\d\d/.test(v||'')?v.slice(0,5):d;
-const fromDb=x=>({id:x.id,created:x.created_at||'',client:x.client||'',tel:x.tel||'',canal:x.canal||'Autre',mode:x.mode==='retrait'?'retrait':'livraison',date:x.date,heure:hhmm(x.heure,'14:00'),retour:x.retour||addDays(x.date,1),heureRetour:hhmm(x.heure_retour,'11:00'),ville:x.ville||'',adr:x.adr||'',trajet:+x.trajet||0,items:x.items&&typeof x.items==='object'?x.items:{},liv:+x.liv||0,camion:+x.camion||0,remise:+x.remise||0,statut:STAT[x.statut]?x.statut:'demande',notes:x.notes||'',suivi:x.suivi&&typeof x.suivi==='object'?x.suivi:{},pay:[]});
+const fromDb=x=>({id:x.id,created:x.created_at||'',client:x.client||'',tel:x.tel||'',canal:x.canal||'Autre',mode:x.mode==='retrait'?'retrait':'livraison',date:x.date,heure:hhmm(x.heure,'14:00'),retour:x.retour||addDays(x.date,1),heureRetour:hhmm(x.heure_retour,'11:00'),ville:x.ville||'',adr:x.adr||'',trajet:+x.trajet||0,items:x.items&&typeof x.items==='object'?x.items:{},liv:+x.liv||0,camion:+x.camion||0,remise:+x.remise||0,statut:STAT[x.statut]?x.statut:'demande',notes:x.notes||'',suivi:x.suivi&&typeof x.suivi==='object'?x.suivi:{},devis:x.devis||null,devisToken:x.devis_token||'',devisAccepte:x.devis_accepte||'',pay:[]});
 const ok=x=>{if(x.error)throw x.error;return x.data};
 const REAL={
   async session(){const {data}=await sb.auth.getSession();return data.session?data.session.user:null},
@@ -451,7 +488,7 @@ const REAL={
 };
 function mockDb(){
   let n=1;const id=()=>'m'+(n++),d=k=>addDays(TODAY,k),cp=v=>v===undefined?v:JSON.parse(JSON.stringify(v));
-  const COLS=['client','tel','canal','mode','date','heure','retour','heure_retour','ville','adr','trajet','items','liv','camion','remise','statut','notes','suivi'];
+  const COLS=['client','tel','canal','mode','date','heure','retour','heure_retour','ville','adr','trajet','items','liv','camion','remise','statut','notes','suivi','devis','devis_token','devis_accepte'];
   const chk=o=>{for(const k in o)if(COLS.indexOf(k)<0)throw new Error('colonne inconnue : '+k)};
   const R=[
    {client:'Thomas P.',tel:'06 00 00 00 01',canal:'WhatsApp',mode:'livraison',date:d(0),heure:'23:30',retour:d(1),heure_retour:'11:00',ville:'Franconville',adr:'12 rue des Lilas, 95130 Franconville',trajet:15,items:{chaise:30,rect:3},liv:70,camion:65,statut:'confirmee'},
@@ -602,6 +639,8 @@ document.addEventListener('click',e=>{
     r.pay.splice(+g.i,1);render();toast('Paiement retiré');track(DB.delPay(p.id))}
   else if(a==='paym'){S.pin.m=g.v;render()}
   else if(a==='msgtype'){S.msgType=g.v;S.waEdit=null;render()}
+  else if(a==='sendevis'){const L=isL(r);if((L&&r.liv===0)||!Object.keys(r.items).length){e.preventDefault();toast(L&&r.liv===0?'Fixe d’abord la livraison':'Ajoute des articles');return}sendDevis(r)}
+  else if(a==='wasend'&&S.msgType==='devis'){sendDevis(r)}
   else if(a==='wasend'){const t=S.msgType;r.suivi=Object.assign({},r.suivi,{[t]:TODAY});const patch={suivi:r.suivi};
     if(t==='devis'&&r.statut==='demande'){r.statut='devis';patch.statut='devis';toast('Marqué « Devis envoyé »')}
     saveRes(r,patch,true);setTimeout(render,80)}
