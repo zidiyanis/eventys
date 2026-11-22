@@ -87,6 +87,7 @@ function render(){
    +'<div class="lab">Détail</div><table><thead><tr><th>Article</th><th class="r">Qté</th><th class="r">Prix</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
    +'<table class="tot"><tbody><tr><td>Location</td><td class="r">'+eur(D.location)+'</td></tr>'
    +(L?'<tr><td>Livraison et récupération</td><td class="r">'+eur(D.livraison)+'</td></tr>':'')
+   +(D.decoPrix?'<tr><td>Décoration'+(D.deco&&D.deco.length?'<div class="sm mut">'+esc(D.deco.join(', '))+'</div>':'')+'</td><td class="r">'+eur(D.decoPrix)+'</td></tr>':'')
    +(D.remise?'<tr><td>Remise</td><td class="r">−'+eur(D.remise)+'</td></tr>':'')
    +'<tr class="big"><td>Total</td><td class="r">'+eur(D.total)+'</td></tr>'
    +(D.paye?'<tr><td>Déjà réglé</td><td class="r">'+eur(D.paye)+'</td></tr><tr><td><b>Reste à régler</b></td><td class="r"><b>'+eur(reste)+'</b></td></tr>':'')+'</tbody></table>'

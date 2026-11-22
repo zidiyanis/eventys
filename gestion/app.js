@@ -43,7 +43,9 @@ const price=k=>k==='chaise'&&S.set.hiver?CAT.hiverChaise:itemOf(k).p;
 const itemOf=k=>ITEMS.find(i=>i.k===k)||{k:k,n:k,c:k,cp:k,s:'',p:0,stock:null,img:''};
 const loc=it=>Object.keys(it).reduce((t,k)=>t+it[k]*price(k),0);
 const isL=r=>r.mode==='livraison';
-const total=r=>Math.max(0,loc(r.items)+(isL(r)?r.liv:0)-(r.remise||0));
+const total=r=>Math.max(0,loc(r.items)+(isL(r)?r.liv:0)+(+r.decoPrix||0)-(r.remise||0));
+const DECO=CAT.deco||[],decoN=k=>{const d=DECO.find(x=>x.k===k);return d?d.n:k};
+const hasArt=r=>Object.keys(r.items).some(k=>r.items[k]>0)||(r.deco||[]).length>0;
 const net=r=>total(r)-(isL(r)?r.camion:0);
 const sigOf=r=>{const t=total(r),p=t?net(r)/t:0;return p>=.6?['good','Rentable']:p>=.4?['warn','Juste']:['bad','À revoir']};
 const acompte=r=>Math.round(total(r)*S.set.acompte/100);
@@ -112,7 +114,7 @@ function evCard(e){
 function todos(){
   const out=[],tom=addDays(TODAY,1),wk=addDays(TODAY,-7);
   S.res.forEach(r=>{const sv=r.suivi||{};
-    if(r.statut==='demande')out.push({r,i:'msg',t:`Répondre à ${r.client}`,s:isL(r)&&r.liv===0?'Demande reçue · fixe le prix de livraison':'Demande reçue · envoie le devis',m:'devis'});
+    if(r.statut==='demande')out.push({r,i:'msg',t:`Répondre à ${r.client}`,s:isL(r)&&r.liv===0?'Demande reçue · fixe le prix de livraison':(r.deco||[]).length&&!r.decoPrix?'Demande reçue · fixe le prix de la déco':'Demande reçue · envoie le devis',m:'devis'});
     else if(r.statut==='devis'&&paid(r)===0&&r.devisAccepte)out.push({r,i:'euro',t:`${r.client} a accepté le devis`,s:`Attends l’acompte de ${eur(acompte(r))}, puis confirme`});
     else if(r.statut==='devis'&&paid(r)===0){const j=sv.devis?Math.round((D(TODAY)-D(sv.devis))/864e5):null;
       if(j===null||j>=2)out.push({r,i:'msg',t:`Relancer ${r.client}`,s:`Devis ${j===null?'envoyé':'envoyé il y a '+j+' j'} · acompte de ${eur(acompte(r))} pas reçu`,m:'relance'})}
@@ -200,7 +202,7 @@ function vStats(){
   const conf=F.length,ann=A.filter(r=>r.statut==='annulee').length,att2=A.filter(r=>r.statut==='demande'||r.statut==='devis').length;
   const can={};F.forEach(r=>{const k=r.canal;(can[k]=can[k]||{n:0,ca:0});can[k].n++;can[k].ca+=total(r)});
   const canR=Object.keys(can).sort((a,b)=>can[b].ca-can[a].ca);
-  const art=ITEMS.map(i=>[i.n,F.reduce((s,r)=>s+(r.items[i.k]||0)*price(i.k),0)]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
+  const art=ITEMS.map(i=>[i.n,F.reduce((s,r)=>s+(r.items[i.k]||0)*price(i.k),0)]).concat([['Décoration',F.reduce((s,r)=>s+(+r.decoPrix||0),0)]]).filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]);
   const D2=F.filter(isL),aLiv=D2.length?D2.reduce((s,r)=>s+r.liv,0)/D2.length:0,aCam=D2.length?D2.reduce((s,r)=>s+r.camion,0)/D2.length:0,loss=D2.filter(r=>r.liv<r.camion);
   const fid=clientsAgg().filter(x=>x.n>=2).length;
   const tips=[];
@@ -270,6 +272,7 @@ function snapshot(r){
   return {num:r.devis&&r.devis.num||nextNum(),emis:TODAY,valide:addDays(TODAY,7),client:r.client.trim(),
    date:r.date,heure:r.heure,retour:r.retour,heureRetour:r.heureRetour,mode:r.mode,ville:L?r.ville:'',
    lignes:keys.map(k=>({n:itemOf(k).n,q:r.items[k],pu:price(k),m:r.items[k]*price(k)})),
+   deco:(r.deco||[]).map(decoN),decoPrix:+r.decoPrix||0,
    location:loc(r.items),livraison:L?r.liv:0,remise:r.remise||0,total:total(r),pct:S.set.acompte,acompte:acompte(r),
    paye:paid(r),paiement:(S.set.paiement||'').trim()};
 }
@@ -282,7 +285,7 @@ function sendDevis(r){
 }
 function msgText(r,type){
   const L=isL(r),v={prenom:r.client.trim().split(' ')[0],date:fd(r.date),heure:r.heure,ville:r.ville||'',
-   articles:Object.keys(r.items).filter(k=>r.items[k]>0).map(k=>`• ${r.items[k]} × ${itemOf(k).n} (${eur(price(k))})`).join('\n'),
+   articles:Object.keys(r.items).filter(k=>r.items[k]>0).map(k=>`• ${r.items[k]} × ${itemOf(k).n} (${eur(price(k))})`).concat((r.deco||[]).length?[`• Décoration (${(r.deco||[]).map(decoN).join(', ')}) : ${r.decoPrix?eur(r.decoPrix):'sur devis'}`]:[]).join('\n'),
    livraison:L?(r.liv>0?`• Livraison${r.ville?' '+r.ville:''} : ${eur(r.liv)}`:'• Livraison : prix à confirmer'):'• Retrait au box à Soisy-sous-Montmorency',
    remise:r.remise?`\n• Remise : −${eur(r.remise)}`:'',total:eur(total(r)),pct:S.set.acompte,acompte:eur(acompte(r)),
    reste:eur(Math.max(0,due(r))),paye:eur(paid(r)),lien:devisUrl(r),paiement:S.set.paiement&&S.set.paiement.trim()?'\n'+S.set.paiement.trim():'',rdv:L?'je te livre':'tu passes au box'};
@@ -364,10 +367,10 @@ function payBlock(r){
 function devisBlock(r){
   if(r.statut==='annulee')return '';
   const d=r.devis,L=isL(r),open=['demande','devis'].includes(r.statut),num=waNum(r.tel||'');
-  const changed=d&&(d.total!==total(r)||d.livraison!==(L?r.liv:0)||d.location!==loc(r.items));
+  const changed=d&&(d.total!==total(r)||d.livraison!==(L?r.liv:0)||(d.decoPrix||0)!==(+r.decoPrix||0)||d.location!==loc(r.items));
   const st=d?`<div class="row sp"><div><div class="b">Devis ${esc(d.num)}</div><div class="sm mut">${r.devisAccepte?'Accepté le '+fd(localIso(new Date(r.devisAccepte)),{day:'numeric',month:'long'}):'Envoyé le '+fd(d.emis,{day:'numeric',month:'long'})+' · pas encore accepté'}</div></div><a class="lnk" target="_blank" rel="noopener" href="${devisUrl(r)}">Voir</a></div>`:'';
   if(!open)return d?`<div class="box">${st}</div>`:'';
-  const warn=L&&r.liv===0?'<div class="tip bad">Fixe d’abord le prix de la livraison ci-dessous.</div>':!Object.keys(r.items).length?'<div class="tip bad">Ajoute les articles avec « Modifier ».</div>':'';
+  const warn=L&&r.liv===0?'<div class="tip bad">Fixe d’abord le prix de la livraison ci-dessous.</div>':!hasArt(r)?'<div class="tip bad">Ajoute les articles avec « Modifier ».</div>':(r.deco||[]).length&&!r.decoPrix?'<div class="tip bad">Fixe d’abord le prix de la déco ci-dessous.</div>':'';
   const lbl=!d?'Envoyer le devis':changed?'Renvoyer le devis mis à jour':'Renvoyer le devis';
   return `<div class="box stack">${st}${changed?'<div class="tip">Le prix a changé depuis l’envoi : renvoie le devis.</div>':''}${warn}
    <a class="btn${d&&!changed?' ghost':''}" target="_blank" rel="noopener" data-act="sendevis" href="https://wa.me/${num}?text=${encodeURIComponent(msgText(r,'devis'))}">${ic('msg',18)}${lbl} · ${eur(total(r))}</a>
@@ -389,6 +392,7 @@ function sheetDetail(r){
     ${L?`<div class="field"><label for="e-adr">Adresse</label><input class="inp" id="e-adr" data-e="adr" value="${esc(r.adr)}" placeholder="Numéro, rue, code postal, ville"></div><div class="field"><label for="e-v">Ville</label><input class="inp" id="e-v" data-e="ville" value="${esc(r.ville)}"></div><div class="row sp"><div><div class="b">Trajet</div><div class="sm mut">Aller simple depuis le box</div></div>${stp('data-act="adj" data-f="trajet" data-d="-5"','data-act="adj" data-f="trajet" data-d="5"',r.trajet+' min')}</div>`:''}
     ${qchips('edq',r.items.chaise||0)}
     <div>${ITEMS.map(i=>stepRow('ed',i.k,r.items[i.k]||0)).join('')}</div>
+    <div><div class="lab" style="margin-bottom:6px">Décoration (sur devis)</div><div class="qchips">${DECO.map(d=>`<button data-act="edeco" data-k="${d.k}" aria-pressed="${(r.deco||[]).indexOf(d.k)>=0}">${esc(d.n)}</button>`).join('')}</div></div>
     <button class="btn s" data-act="edit">Terminé</button></div>`:'';
   return `<div class="grab"></div><div class="sh-hd"><span class="st c-${sc}" style="margin-top:8px">${sl}</span>${closeBtn}</div>
   <div class="name-l">${esc(r.client)}</div>
@@ -399,10 +403,12 @@ function sheetDetail(r){
   ${L&&r.liv===0&&['demande','devis'].includes(r.statut)?'<div class="tip bad">Prix de livraison à fixer : le client n’en a vu aucun. Règle la livraison et le camion plus bas, puis envoie le devis.</div>':''}
   ${w.map(x=>`<div class="tip bad">Stock insuffisant ce jour-là : ${x}</div>`).join('')}
   ${!r.tel?'<div class="tip">Pas de numéro : ajoute-le avec « Modifier » pour ouvrir WhatsApp sur ce client.</div>':''}
-  <div class="box">${items||'<div class="sm mut">Aucun article. Ajoute-les avec « Modifier ».</div>'}</div>
+  <div class="box">${items||(r.deco||[]).length?items:'<div class="sm mut">Aucun article. Ajoute-les avec « Modifier ».</div>'}${(r.deco||[]).length?`<div class="${items?'irow':''}" style="${items?'':'padding:0'}"><div class="grow"><div class="lab">Décoration demandée</div><div class="b">${(r.deco||[]).map(k=>esc(decoN(k))).join(' · ')}</div></div></div>`:''}</div>
+  ${(r.deco||[]).length||r.decoPrix?`<div class="box row sp"><div><div class="b">Prix de la décoration</div><div class="sm mut">Sur devis : le client ne l’a pas vu</div></div>${stp('data-act="adj" data-f="decoPrix" data-d="-10"','data-act="adj" data-f="decoPrix" data-d="10"',eur(r.decoPrix||0))}</div>`:''}
   <div><div class="lab" style="margin:0 2px 6px">Détail du prix</div>
    <div class="pr"><span>Location</span><b>${eur(lo)}</b></div>
    ${L?`<div class="pr"><span>Livraison</span><b>+${eur(r.liv)}</b></div>`:''}
+   ${r.decoPrix?`<div class="pr"><span>Décoration</span><b>+${eur(r.decoPrix)}</b></div>`:''}
    ${r.remise?`<div class="pr"><span>Remise</span><b>−${eur(r.remise)}</b></div>`:''}
    <div class="pr tot"><span>Total</span><span>${eur(total(r))}</span></div>
    <button class="lnk" data-act="disc" style="margin-top:6px">Faire une remise</button>
@@ -468,10 +474,10 @@ function sheetNew(){
 
 /* ---------- données (Supabase) ---------- */
 let sb=null;
-const KEYMAP={heureRetour:'heure_retour',devisToken:'devis_token',devisAccepte:'devis_accepte'};
+const KEYMAP={heureRetour:'heure_retour',decoPrix:'deco_prix',devisToken:'devis_token',devisAccepte:'devis_accepte'};
 const toDb=p=>{const o={};for(const k in p)o[KEYMAP[k]||k]=p[k];return o};
 const hhmm=(v,d)=>/^\d\d:\d\d/.test(v||'')?v.slice(0,5):d;
-const fromDb=x=>({id:x.id,created:x.created_at||'',client:x.client||'',tel:x.tel||'',canal:x.canal||'Autre',mode:x.mode==='retrait'?'retrait':'livraison',date:x.date,heure:hhmm(x.heure,'14:00'),retour:x.retour||addDays(x.date,1),heureRetour:hhmm(x.heure_retour,'11:00'),ville:x.ville||'',adr:x.adr||'',trajet:+x.trajet||0,items:x.items&&typeof x.items==='object'?x.items:{},liv:+x.liv||0,camion:+x.camion||0,remise:+x.remise||0,statut:STAT[x.statut]?x.statut:'demande',notes:x.notes||'',suivi:x.suivi&&typeof x.suivi==='object'?x.suivi:{},devis:x.devis||null,devisToken:x.devis_token||'',devisAccepte:x.devis_accepte||'',pay:[]});
+const fromDb=x=>({id:x.id,created:x.created_at||'',client:x.client||'',tel:x.tel||'',canal:x.canal||'Autre',mode:x.mode==='retrait'?'retrait':'livraison',date:x.date,heure:hhmm(x.heure,'14:00'),retour:x.retour||addDays(x.date,1),heureRetour:hhmm(x.heure_retour,'11:00'),ville:x.ville||'',adr:x.adr||'',trajet:+x.trajet||0,items:x.items&&typeof x.items==='object'?x.items:{},liv:+x.liv||0,camion:+x.camion||0,remise:+x.remise||0,statut:STAT[x.statut]?x.statut:'demande',notes:x.notes||'',suivi:x.suivi&&typeof x.suivi==='object'?x.suivi:{},deco:Array.isArray(x.deco)?x.deco:[],decoPrix:+x.deco_prix||0,devis:x.devis||null,devisToken:x.devis_token||'',devisAccepte:x.devis_accepte||'',pay:[]});
 const ok=x=>{if(x.error)throw x.error;return x.data};
 const REAL={
   async session(){const {data}=await sb.auth.getSession();return data.session?data.session.user:null},
@@ -488,7 +494,7 @@ const REAL={
 };
 function mockDb(){
   let n=1;const id=()=>'m'+(n++),d=k=>addDays(TODAY,k),cp=v=>v===undefined?v:JSON.parse(JSON.stringify(v));
-  const COLS=['client','tel','canal','mode','date','heure','retour','heure_retour','ville','adr','trajet','items','liv','camion','remise','statut','notes','suivi','devis','devis_token','devis_accepte'];
+  const COLS=['client','tel','canal','mode','date','heure','retour','heure_retour','ville','adr','trajet','items','liv','camion','remise','statut','notes','suivi','devis','devis_token','devis_accepte','deco','deco_prix'];
   const chk=o=>{for(const k in o)if(COLS.indexOf(k)<0)throw new Error('colonne inconnue : '+k)};
   const R=[
    {client:'Thomas P.',tel:'06 00 00 00 01',canal:'WhatsApp',mode:'livraison',date:d(0),heure:'23:30',retour:d(1),heure_retour:'11:00',ville:'Franconville',adr:'12 rue des Lilas, 95130 Franconville',trajet:15,items:{chaise:30,rect:3},liv:70,camion:65,statut:'confirmee'},
@@ -623,6 +629,7 @@ document.addEventListener('click',e=>{
   else if(a==='edit'){S.edit=!S.edit;render()}
   else if(a==='disc'){S.disc=!S.disc;render()}
   else if(a==='eset'){r[g.f]=g.v;saveRes(r,{[g.f]:g.v},true);render()}
+  else if(a==='edeco'){const k=g.k,cur=r.deco||[];r.deco=cur.indexOf(k)>=0?cur.filter(x=>x!==k):cur.concat([k]);saveRes(r,{deco:r.deco});render()}
   else if(a==='edq'){r.items.chaise=+g.n;saveRes(r,{items:r.items});render()}
   else if(a==='rem'){r.remise=Math.max(0,(r.remise||0)+(+g.d));saveRes(r,{remise:r.remise});render()}
   else if(a==='adj'){r[g.f]=Math.max(0,r[g.f]+(+g.d));saveRes(r,{[g.f]:r[g.f]});render()}
@@ -639,7 +646,7 @@ document.addEventListener('click',e=>{
     r.pay.splice(+g.i,1);render();toast('Paiement retiré');track(DB.delPay(p.id))}
   else if(a==='paym'){S.pin.m=g.v;render()}
   else if(a==='msgtype'){S.msgType=g.v;S.waEdit=null;render()}
-  else if(a==='sendevis'){const L=isL(r);if((L&&r.liv===0)||!Object.keys(r.items).length){e.preventDefault();toast(L&&r.liv===0?'Fixe d’abord la livraison':'Ajoute des articles');return}sendDevis(r)}
+  else if(a==='sendevis'){const L=isL(r);const nd=(r.deco||[]).length&&!r.decoPrix;if((L&&r.liv===0)||!hasArt(r)||nd){e.preventDefault();toast(L&&r.liv===0?'Fixe d’abord la livraison':nd?'Fixe d’abord le prix de la déco':'Ajoute des articles');return}sendDevis(r)}
   else if(a==='wasend'&&S.msgType==='devis'){sendDevis(r)}
   else if(a==='wasend'){const t=S.msgType;r.suivi=Object.assign({},r.suivi,{[t]:TODAY});const patch={suivi:r.suivi};
     if(t==='devis'&&r.statut==='demande'){r.statut='devis';patch.statut='devis';toast('Marqué « Devis envoyé »')}

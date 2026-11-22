@@ -53,9 +53,11 @@ function build(data) {
     const items = r.items || {};
     const keys = Object.keys(items).filter(k => items[k] > 0);
     const loc = keys.reduce((t, k) => t + items[k] * price(k), 0);
-    const total = Math.max(0, loc + (liv ? +r.liv || 0 : 0) - (+r.remise || 0));
+    const total = Math.max(0, loc + (liv ? +r.liv || 0 : 0) + (+r.deco_prix || 0) - (+r.remise || 0));
     const reste = total - (+r.paye || 0);
-    const lignes = keys.map(k => `${items[k]} × ${name(k)}`).join('\n');
+    const decoN = k => { const d = (CAT.deco || []).find(x => x.k === k); return d ? d.n : k; };
+    const lignes = keys.map(k => `${items[k]} × ${name(k)}`)
+      .concat(Array.isArray(r.deco) && r.deco.length ? ['Déco : ' + r.deco.map(decoN).join(', ')] : []).join('\n');
     const trajet = liv ? (+r.trajet || 0) : 0;
     const base = [
       lignes,
