@@ -170,7 +170,7 @@ function send(){
      S.sent={nom:S.nom.trim().split(' ')[0],date:S.date,txt:lines.join(', '),
        recap:cap(fdate(S.date))+'\n'+lines.join('\n')+'\n'+(S.mode==='livraison'?'Livraison à '+S.ville.trim():'Retrait au box')+'\nLocation : '+eur(loc())+(S.mode==='livraison'?' (hors livraison)':'')};
      S.busy=false;render();window.scrollTo(0,0)})
-   .catch(function(err){S.busy=false;S.err=/trop de demandes/.test(err.message)?'Beaucoup de demandes en ce moment : réessaie dans un moment, ou écris à Eventys sur WhatsApp.':'L’envoi n’a pas marché. Vérifie ta connexion, ou écris directement à Eventys sur WhatsApp au 07 83 82 56 38.';render()});
+   .catch(function(err){S.busy=false;S.err=/trop de demandes/.test(err.message)?'Beaucoup de demandes en ce moment : réessaie dans un moment, ou écris à Eventys sur WhatsApp.':'L’envoi n’a pas marché. Vérifie ta connexion, ou écris directement à Eventys sur WhatsApp au 06 87 10 89 27.';render()});
 }
 var cap=function(s){return s.charAt(0).toUpperCase()+s.slice(1)};
 render();

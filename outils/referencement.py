@@ -146,7 +146,7 @@ LLMS = """# Eventys
 > materiel apres l'evenement.
 
 Site : {url}
-Devis : par WhatsApp au +33 7 83 82 56 38, depuis le composeur de la page.
+Devis : par WhatsApp au +33 6 87 10 89 27, depuis le composeur de la page.
 Depart du materiel : box a Soisy-sous-Montmorency (95230), Val-d'Oise.
 Zone desservie : toute l'Ile-de-France (75, 77, 78, 91, 92, 93, 94, 95).
 Reseaux : https://www.instagram.com/eventys.paris/ , https://www.tiktok.com/@eventys.paris
