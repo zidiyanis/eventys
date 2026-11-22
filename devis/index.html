@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Eventys · Devis</title>
+<meta name="theme-color" content="#F6F2F0">
+<meta name="format-detection" content="telephone=no">
+<link rel="icon" href="/gestion/icone-192.png">
+<link rel="apple-touch-icon" href="/gestion/icone-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#F6F2F0;--card:#FFFFFF;--card2:#EDE6E2;--line:#E2D8D3;--ink:#2A1A18;--muted:#7A6A66;--accent:#6F2F2F;--accent-ink:#FFFFFF;--good:#2F7D55;--bad:#B3362E;--warn:#9A6414;
+ --font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;--display:'Bodoni Moda','Didot',Georgia,serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+button{font:inherit;cursor:pointer;border:0}
+.wrap{max-width:640px;margin:0 auto;padding:22px max(16px,env(safe-area-inset-left,0px)) 40px max(16px,env(safe-area-inset-right,0px))}
+.paper{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:24px 20px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid var(--line);padding-bottom:18px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:56px;height:56px;border-radius:14px}
+.brand b{font:700 26px/1 var(--display);display:block}
+.brand span{font-size:12px;color:var(--muted)}
+.num{text-align:right;font-size:13px;color:var(--muted)}
+.num b{display:block;font-size:15px;color:var(--ink)}
+h1{font:700 30px/1.1 var(--display);margin:22px 0 4px}
+.lab{font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin:22px 0 8px}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info div{background:var(--bg);border-radius:12px;padding:10px 12px}
+.info small{display:block;font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+td,th{padding:9px 0;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td.r,th.r{text-align:right;white-space:nowrap;padding-left:10px}
+.tot td{border:0;padding:5px 0}
+.tot .big td{font-size:20px;font-weight:700;padding-top:12px;border-top:2px solid var(--ink)}
+.acc{background:var(--accent);color:var(--accent-ink);border-radius:16px;padding:14px 16px;margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.acc b{font-size:24px}
+.pay{white-space:pre-wrap;background:var(--bg);border-radius:12px;padding:12px;font-size:14px}
+.cond{font-size:13px;color:var(--muted);margin:0;padding-left:18px}
+.btn{display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;border-radius:16px;font-weight:600;font-size:16px;background:var(--accent);color:var(--accent-ink);text-decoration:none;margin-top:12px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn:disabled{opacity:.6}
+.ok{background:color-mix(in srgb,var(--good) 14%,transparent);color:var(--good);border-radius:14px;padding:14px;font-weight:600;margin-top:18px}
+.bad{background:color-mix(in srgb,var(--bad) 12%,transparent);color:var(--bad);border-radius:14px;padding:14px;font-weight:500;margin-top:18px}
+.mut{color:var(--muted)}.sm{font-size:13px}
+.center{text-align:center;padding:60px 0;color:var(--muted)}
+@media print{
+ body{background:#fff}.wrap{padding:0;max-width:none}.paper{border:0;padding:0}
+ .noprint{display:none!important}.acc{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"><div class="center">Chargement du devis…</div></main>
+<script>
+(function(){
+'use strict';
+var SB='https://qtktxkolgxytroblylae.supabase.co',KEY='sb_publishable_Wf4Qc4XkVxI9-5fnFoRoVg_1Yir0Jlt',WA='33687108927';
+var tok=(new URLSearchParams(location.search).get('d')||'').toLowerCase();
+var D=null,busy=false,err='';
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+var eur=function(n){return (Math.round(n*100)/100).toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2})+' €'};
+var loc10=function(s){if(!s||s.length<=10)return s;var d=new Date(s);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+var fd=function(s,o){s=loc10(s);return s?new Date(s.slice(0,10)+'T12:00:00').toLocaleDateString('fr-FR',o||{weekday:'long',day:'numeric',month:'long',year:'numeric'}):''};
+var cap=function(s){return s.charAt(0).toUpperCase()+s.slice(1)};
+function rpc(fn,args){return fetch(SB+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json'},body:JSON.stringify(args)})
+ .then(function(r){return r.text().then(function(t){var j=t?JSON.parse(t):null;if(!r.ok)throw new Error(j&&j.message||'HTTP '+r.status);return j})})}
+function render(){
+  if(!D){$('#app').innerHTML='<div class="center">Ce devis est introuvable.<br>Vérifie le lien, ou écris à Eventys sur WhatsApp.<a class="btn" href="https://wa.me/'+WA+'" target="_blank" rel="noopener">Écrire à Eventys</a></div>';return}
+  var L=D.mode==='livraison',expired=!D.accepte&&D.valide&&D.valide<new Date().toISOString().slice(0,10);
+  document.title='Eventys · Devis '+D.num;
+  var rows=(D.lignes||[]).map(function(l){return '<tr><td>'+esc(l.n)+'</td><td class="r">'+l.q+'</td><td class="r">'+eur(l.pu)+'</td><td class="r">'+eur(l.m)+'</td></tr>'}).join('');
+  var reste=D.total-(D.paye||0);
+  var h='<div class="paper"><div class="head"><div class="brand"><img src="/gestion/icone-192.png" alt=""><div><b>Eventys</b><span>Location de mobilier événementiel · Île-de-France</span></div></div>'
+   +'<div class="num"><b>Devis '+esc(D.num)+'</b>Émis le '+fd(D.emis,{day:'numeric',month:'long',year:'numeric'})+'<br>Valable jusqu’au '+fd(D.valide,{day:'numeric',month:'long'})+'</div></div>'
+   +'<h1>Bonjour '+esc((D.client||'').split(' ')[0])+',</h1><div class="mut">voici le détail de ta location.</div>'
+   +'<div class="lab">Ton événement</div><div class="info"><div><small>'+(L?'Livraison':'Retrait au box')+'</small>'+cap(fd(D.date,{weekday:'long',day:'numeric',month:'long'}))+(D.heure?' · '+esc(D.heure):'')+'</div>'
+   +'<div><small>'+(L?'Récupération':'Retour au box')+'</small>'+(D.retour?cap(fd(D.retour,{weekday:'long',day:'numeric',month:'long'}))+(D.heureRetour?' · '+esc(D.heureRetour):''):'À convenir')+'</div>'
+   +'<div style="grid-column:1/-1"><small>Lieu</small>'+(L?'Livraison'+(D.ville?' à '+esc(D.ville):''):'Box Eventys, Soisy-sous-Montmorency (95)')+'</div></div>'
+   +'<div class="lab">Détail</div><table><thead><tr><th>Article</th><th class="r">Qté</th><th class="r">Prix</th><th class="r">Total</th></tr></thead><tbody>'+rows+'</tbody></table>'
+   +'<table class="tot"><tbody><tr><td>Location</td><td class="r">'+eur(D.location)+'</td></tr>'
+   +(L?'<tr><td>Livraison et récupération</td><td class="r">'+eur(D.livraison)+'</td></tr>':'')
+   +(D.decoPrix?'<tr><td>Décoration'+(D.deco&&D.deco.length?'<div class="sm mut">'+esc(D.deco.join(', '))+'</div>':'')+'</td><td class="r">'+eur(D.decoPrix)+'</td></tr>':'')
+   +(D.remise?'<tr><td>Remise</td><td class="r">−'+eur(D.remise)+'</td></tr>':'')
+   +'<tr class="big"><td>Total</td><td class="r">'+eur(D.total)+'</td></tr>'
+   +(D.paye?'<tr><td>Déjà réglé</td><td class="r">'+eur(D.paye)+'</td></tr><tr><td><b>Reste à régler</b></td><td class="r"><b>'+eur(reste)+'</b></td></tr>':'')+'</tbody></table>'
+   +'<div class="acc"><div>Acompte pour bloquer la date<div class="sm" style="opacity:.8">'+D.pct+' % du total, le reste le jour J</div></div><b>'+eur(D.acompte)+'</b></div>'
+   +(D.paiement?'<div class="lab">Pour régler l’acompte</div><div class="pay">'+esc(D.paiement)+'</div>':'')
+   +'<div class="lab">Bon à savoir</div><ul class="cond"><li>La date est réservée à réception de l’acompte.</li><li>Le solde se règle le jour de la '+(L?'livraison':'remise du matériel')+'.</li><li>Le matériel est rendu dans l’état où il a été loué.</li></ul>';
+  if(D.annule)h+='<div class="bad">Ce devis a été annulé. Écris à Eventys pour en refaire un.</div>';
+  else if(D.confirme)h+='<div class="ok">Ta réservation est confirmée. Merci !</div>';
+  else if(D.accepte)h+='<div class="ok">Devis accepté le '+fd(D.accepte,{day:'numeric',month:'long'})+'. Merci ! '+(D.paiement?'Règle l’acompte pour bloquer ta date.':'Eventys te recontacte pour l’acompte.')+'</div>';
+  else if(expired)h+='<div class="bad">Ce devis a expiré. Écris à Eventys : il te le met à jour en un instant.</div>';
+  h+='</div>';
+  h+='<div class="noprint">';
+  if(!D.annule&&!D.confirme&&!D.accepte&&!expired)h+=(err?'<div class="bad">'+esc(err)+'</div>':'')+'<button class="btn" id="go" '+(busy?'disabled':'')+'>'+(busy?'Envoi…':'J’accepte ce devis')+'</button>';
+  h+='<a class="btn ghost" href="https://wa.me/'+WA+'?text='+encodeURIComponent('Bonjour, j’ai une question sur mon devis '+D.num+'.')+'" target="_blank" rel="noopener">Une question ? Écrire sur WhatsApp</a>'
+   +'<button class="btn ghost" id="pdf">Enregistrer en PDF</button></div>';
+  $('#app').innerHTML=h;
+}
+document.addEventListener('click',function(e){
+  if(e.target.id==='pdf')window.print();
+  if(e.target.id==='go'&&!busy){busy=true;err='';render();
+    rpc('accepter_devis',{p_token:tok}).then(function(ok){busy=false;if(ok){D.accepte=new Date().toISOString()}else err='Ce devis ne peut plus être accepté. Écris à Eventys.';render()})
+     .catch(function(){busy=false;err='L’envoi n’a pas marché. Vérifie ta connexion et réessaie.';render()})}
+});
+if(!/^[a-f0-9]{32,64}$/.test(tok)){render();return}
+rpc('devis_public',{p_token:tok}).then(function(j){D=j;render()}).catch(function(){$('#app').innerHTML='<div class="center">Impossible de charger le devis. Vérifie ta connexion et recharge la page.</div>'});
+})();
+</script>
+</body>
+</html>
