@@ -14,7 +14,7 @@ const EVENTYS = {
      espace. Exemple pour un 06 12 34 56 78 : "33612345678".
      Tant qu'il vaut null, le site le dit et propose de copier le message.
      ------------------------------------------------------------------ */
-  whatsapp: "33783825638",   // 07 83 82 56 38
+  whatsapp: "33687108927",   // 06 87 10 89 27
 
   instagram: "https://www.instagram.com/eventys.paris/",
   tiktok: "https://www.tiktok.com/@eventys.paris",
